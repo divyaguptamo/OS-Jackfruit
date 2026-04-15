@@ -123,7 +123,6 @@ sudo rmmod monitor
 
 ## 4. Demo with Screenshots
 
-Place all screenshots inside a folder named `screenshots/`.
 
 ### TASK 1 Multi-container Supervision
 
