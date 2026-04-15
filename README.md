@@ -127,7 +127,7 @@ Place all screenshots inside a folder named `screenshots/`.
 
 ### TASK 1 Multi-container Supervision
 
-![Multi-container Supervision](screenshots/multi_container.png)
+![Multi-container Supervision](screenshots/task1.png)
 
 Caption: Two or more containers running under a single supervisor process.
 
@@ -135,7 +135,7 @@ Caption: Two or more containers running under a single supervisor process.
 
 ### TASK 2 Metadata Tracking
 
-![Metadata Tracking](screenshots/ps_output.png)
+![Metadata Tracking](screenshots/task2.png)
 
 Caption: Output of the `ps` command showing tracked container metadata.
 
@@ -143,7 +143,7 @@ Caption: Output of the `ps` command showing tracked container metadata.
 
 ### TASK 3 Bounded-buffer Logging
 
-![Bounded Buffer Logging](screenshots/logging.png)
+![Bounded Buffer Logging](screenshots/task3.png)
 
 Caption: Log output demonstrating producer-consumer logging pipeline.
 
@@ -151,14 +151,14 @@ Caption: Log output demonstrating producer-consumer logging pipeline.
 
 ### TASK 4 Memory Limit Monitoring
 
-![Memory Limit Monitoring](screenshots/mem.png)
+![Memory Limit Monitoring](screenshots/task4.png)
 
 
 ---
 
 ### TASK 5 Scheduling Experiment
 
-![Scheduling](screenshots/scheduling.png)
+![Scheduling](screenshots/task5.png)
 
 Caption: CPU usage differences based on nice values.
 
@@ -166,7 +166,7 @@ Caption: CPU usage differences based on nice values.
 
 ### TASK 6 Clean Teardown
 
-![Clean Teardown](screenshots/cleanup.png)
+![Clean Teardown](screenshots/task6.png)
 
 Caption: No zombie processes after shutdown.
 
