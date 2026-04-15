@@ -125,7 +125,7 @@ sudo rmmod monitor
 
 Place all screenshots inside a folder named `screenshots/`.
 
-### 4.1 Multi-container Supervision
+### TASK 1 Multi-container Supervision
 
 ![Multi-container Supervision](screenshots/multi_container.png)
 
@@ -133,7 +133,7 @@ Caption: Two or more containers running under a single supervisor process.
 
 ---
 
-### 4.2 Metadata Tracking
+### TASK 2 Metadata Tracking
 
 ![Metadata Tracking](screenshots/ps_output.png)
 
@@ -141,7 +141,7 @@ Caption: Output of the `ps` command showing tracked container metadata.
 
 ---
 
-### 4.3 Bounded-buffer Logging
+### TASK 3 Bounded-buffer Logging
 
 ![Bounded Buffer Logging](screenshots/logging.png)
 
@@ -149,31 +149,14 @@ Caption: Log output demonstrating producer-consumer logging pipeline.
 
 ---
 
-### 4.4 CLI and IPC
+### TASK 4 Memory Limit Monitoring
 
-![CLI IPC](screenshots/ipc.png)
+![Memory Limit Monitoring](screenshots/mem.png)
 
-Caption: CLI command issued and supervisor responding via IPC.
-
----
-
-### 4.5 Soft-limit Warning
-
-![Soft Limit Warning](screenshots/soft_limit.png)
-
-Caption: Kernel log showing soft memory limit warning.
 
 ---
 
-### 4.6 Hard-limit Enforcement
-
-![Hard Limit](screenshots/hard_limit.png)
-
-Caption: Container terminated after exceeding hard memory limit.
-
----
-
-### 4.7 Scheduling Experiment
+### TASK 5 Scheduling Experiment
 
 ![Scheduling](screenshots/scheduling.png)
 
@@ -181,7 +164,7 @@ Caption: CPU usage differences based on nice values.
 
 ---
 
-### 4.8 Clean Teardown
+### TASK 6 Clean Teardown
 
 ![Clean Teardown](screenshots/cleanup.png)
 
