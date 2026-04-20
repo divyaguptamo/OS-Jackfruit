@@ -6,18 +6,18 @@
 #include <linux/device.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/pid.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/timer.h>
-#include <linux/uaccess.h>
-#include <linux/version.h>
+#include <linux/list.h> //linked list support
+#include <linux/mm.h>  //memory management
+#include <linux/module.h> //kernel module
+#include <linux/spinlock.h>  //for locking(thread safety)
+#include <linux/pid.h>   //for handling process IDs
+#include <linux/sched/signal.h>  //for sending signals(kill)
+#include <linux/slab.h>  //for memory allocation(kmalloc)
+#include <linux/timer.h> //for periodic execution
+#include <linux/uaccess.h> //for copying data frm user space
+#include <linux/version.h>  //kernel version checks
 
-#include "monitor_ioctl.h"
+#include "monitor_ioctl.h"  //ur custom structure for communication
 
 #define DEVICE_NAME "container_monitor"
 #define CHECK_INTERVAL_SEC 1
@@ -26,52 +26,52 @@
  * TODO 1: Define your linked-list node struct.
  * ============================================================== */
 struct monitor_node {
-    pid_t pid;
-    unsigned long soft_limit_bytes;
-    unsigned long hard_limit_bytes;
-    char container_id[MONITOR_NAME_LEN];
-    bool soft_warning_emitted;
+    pid_t pid; //process id of container
+    unsigned long soft_limit_bytes; //soft mem limit
+    unsigned long hard_limit_bytes; //hard mem limit
+    char container_id[MONITOR_NAME_LEN]; // name like alpha
+    bool soft_warning_emitted; //avoid repeated warnings
     struct list_head list;
 };
 
 /* ==============================================================
  * TODO 2: Declare the global monitored list and a lock.
  * ============================================================== */
-static LIST_HEAD(monitor_list);
-static DEFINE_SPINLOCK(monitor_lock);
+static LIST_HEAD(monitor_list);  //creates empty list
+static DEFINE_SPINLOCK(monitor_lock);  //lock for safe access
 
 /* --- Provided: internal device / timer state --- */
-static struct timer_list monitor_timer;
-static dev_t dev_num;
-static struct cdev c_dev;
-static struct class *cl;
+static struct timer_list monitor_timer; //timer object
+static dev_t dev_num;    //device number
+static struct cdev c_dev;  //char device
+static struct class *cl;    //device class
 
 /* ---------------------------------------------------------------
  * Provided: RSS Helper
  * --------------------------------------------------------------- */
-static long get_rss_bytes(pid_t pid)
+static long get_rss_bytes(pid_t pid)  //function to get mem usage
 {
-    struct task_struct *task;
-    struct mm_struct *mm;
-    long rss_pages = 0;
+    struct task_struct *task;  //represents process
+    struct mm_struct *mm;      //mem info of process
+    long rss_pages = 0;       //stores mem pages
 
-    rcu_read_lock();
-    task = pid_task(find_vpid(pid), PIDTYPE_PID);
+    rcu_read_lock();   //lock for same read
+    task = pid_task(find_vpid(pid), PIDTYPE_PID); //find process using pid
     if (!task) {
         rcu_read_unlock();
         return -1;
     }
-    get_task_struct(task);
+    get_task_struct(task);  //inc ref count
     rcu_read_unlock();
 
-    mm = get_task_mm(task);
+    mm = get_task_mm(task);  //get mem structure
     if (mm) {
-        rss_pages = get_mm_rss(mm);
+        rss_pages = get_mm_rss(mm);  //get mem used
         mmput(mm);
     }
     put_task_struct(task);
 
-    return rss_pages * PAGE_SIZE;
+    return rss_pages * PAGE_SIZE;   //convert pages ->bytes
 }
 
 /* ---------------------------------------------------------------
@@ -80,18 +80,18 @@ static long get_rss_bytes(pid_t pid)
 static void log_soft_limit_event(const char *container_id,
                                  pid_t pid,
                                  unsigned long limit_bytes,
-                                 long rss_bytes)
+                                 long rss_bytes) //print warning when container crosses soft mem limit
 {
     printk(KERN_WARNING
            "[container_monitor] SOFT LIMIT container=%s pid=%d rss=%ld limit=%lu\n",
            container_id, pid, rss_bytes, limit_bytes);
 }
-
+//print warning in kernel logs 
 /* ---------------------------------------------------------------
  * Provided: hard-limit helper
  * --------------------------------------------------------------- */
 static void kill_process(const char *container_id,
-                         pid_t pid,
+                         pid_t pid, //process id of container
                          unsigned long limit_bytes,
                          long rss_bytes)
 {
@@ -111,19 +111,19 @@ static void kill_process(const char *container_id,
 /* ---------------------------------------------------------------
  * Timer Callback - fires every CHECK_INTERVAL_SEC seconds.
  * --------------------------------------------------------------- */
-static void timer_callback(struct timer_list *t)
+static void timer_callback(struct timer_list *t)  //runs every sec
 {
     /* ==============================================================
      * TODO 3: Implement periodic monitoring.
      * ============================================================== */
-    struct monitor_node *entry, *tmp;
-    unsigned long flags;
-    long rss_bytes;
+    struct monitor_node *entry, *tmp;  //for iterating list
+    unsigned long flags;   //for locking
+    long rss_bytes;       //mem usage
 
-    spin_lock_irqsave(&monitor_lock, flags);
+    spin_lock_irqsave(&monitor_lock, flags); //lock list
     
     list_for_each_entry_safe(entry, tmp, &monitor_list, list) {
-        rss_bytes = get_rss_bytes(entry->pid);
+        rss_bytes = get_rss_bytes(entry->pid); //get mem
 
         /* If process exited naturally, remove it from tracking */
         if (rss_bytes < 0) {
@@ -133,13 +133,15 @@ static void timer_callback(struct timer_list *t)
         }
 
         /* Enforce Hard Limit */
-        if (rss_bytes > entry->hard_limit_bytes) {
+        if (rss_bytes > entry->hard_limit_bytes) { //kill process
             kill_process(entry->container_id, entry->pid, entry->hard_limit_bytes, rss_bytes);
             list_del(&entry->list);
             kfree(entry);
         } 
         /* Enforce Soft Limit (Only warn once) */
-        else if (rss_bytes > entry->soft_limit_bytes && !entry->soft_warning_emitted) {
+        else if (rss_bytes > entry->soft_limit_bytes && !entry->soft_warning_emitted) 
+        //print warning once,unlock
+        {
             log_soft_limit_event(entry->container_id, entry->pid, entry->soft_limit_bytes, rss_bytes);
             entry->soft_warning_emitted = true;
         }
@@ -147,7 +149,7 @@ static void timer_callback(struct timer_list *t)
     
     spin_unlock_irqrestore(&monitor_lock, flags);
 
-    mod_timer(&monitor_timer, jiffies + CHECK_INTERVAL_SEC * HZ);
+    mod_timer(&monitor_timer, jiffies + CHECK_INTERVAL_SEC * HZ); //restart timer
 }
 
 /* ---------------------------------------------------------------
